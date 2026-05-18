@@ -144,27 +144,27 @@ flutter analyze
 ## Screenshots
 
 ### Splash Screen
-<img src="assests/images/splash.png" width=""300>
+<img src="assets/images/splash.png" width="300"/>
 
 ### Home Screen
-<img src="assests/images/home.png" width=""300>
+<img src="assets/images/home.png" width="300"/>
 
 ### Add Recipe Screen
-<img src="assets/images/add_recipe.png" width=""300>
+<img src="assets/images/add_recipe.png" width="300"/>
 
 ### Edit Recipe Screen
-<img src="assets/images/edit_recipe.png" width=""300>
+<img src="assets/images/edit_recipe.png" width="300"/>
 
 ### Detail Screen
-<img src="assets/images/detail.png" width=""300>
+<img src="assets/images/detail.png" width="300"/>
 
 ### Saved Screen
-<img src="assets/images/saved.png" width=""300>
+<img src="assets/images/saved.png" width="300"/>
 
 ### Profile Screen
-<img src="assets/images/profile.png" width=""300>
+<img src="assets/images/profile.png" width="300"/>
 ### delete screen
-<img src="assets/images/delete.png" width=""300>
+<img src="assets/images/delete.png" width="300"/>
 
 ---
 
