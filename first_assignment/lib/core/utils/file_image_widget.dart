@@ -1,0 +1,1 @@
+export 'file_image_widget_stub.dart' if (dart.library.io) 'file_image_widget_io.dart';
