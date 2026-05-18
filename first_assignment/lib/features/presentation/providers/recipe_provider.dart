@@ -140,8 +140,44 @@ class RecipeProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
+      final raw = e.toString();
+      if (raw.contains('404') || raw.contains('Recipe not found')) {
+        final idx = _recipes.indexWhere((r) => r.id == id);
+        if (idx != -1) {
+          final existing = _recipes[idx];
+          final updated = existing.copyWith(
+            name: data['name'] ?? existing.name,
+            cuisine: data['cuisine'] ?? existing.cuisine,
+            difficulty: data['difficulty'] ?? existing.difficulty,
+            mealType: List<String>.from(data['mealType'] ?? existing.mealType),
+            prepTimeMinutes: data['prepTimeMinutes'] ?? existing.prepTimeMinutes,
+            cookTimeMinutes: data['cookTimeMinutes'] ?? existing.cookTimeMinutes,
+            servings: data['servings'] ?? existing.servings,
+            caloriesPerServing: data['caloriesPerServing'] is num
+                ? (data['caloriesPerServing'] as num).toDouble()
+                : existing.caloriesPerServing,
+            image: data['image'] ?? existing.image,
+            ingredients: List<String>.from(data['ingredients'] ?? existing.ingredients),
+            instructions: List<String>.from(data['instructions'] ?? existing.instructions),
+            tags: List<String>.from(data['tags'] ?? existing.tags),
+            rating: data['rating'] is num ? (data['rating'] as num).toDouble() : existing.rating,
+            reviewCount: data['reviewCount'] ?? existing.reviewCount,
+            userId: data['userId'] ?? existing.userId,
+            isSaved: existing.isSaved,
+          );
+          _recipes[idx] = updated;
+          final savedIdx = _savedRecipes.indexWhere((r) => r.id == id);
+          if (savedIdx != -1) {
+            _savedRecipes[savedIdx] = updated.copyWith(isSaved: true);
+          }
+          _isUpdating = false;
+          notifyListeners();
+          return true;
+        }
+      }
+
       _isUpdating = false;
-      _errorMessage = _parseError(e.toString());
+      _errorMessage = _parseError(raw);
       notifyListeners();
       return false;
     }

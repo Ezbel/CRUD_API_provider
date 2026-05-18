@@ -30,8 +30,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   String _difficulty = 'Easy';
   String _mealType = 'Dinner';
-  final List<String> _ingredients = [''];
-  final List<String> _instructions = [''];
+  final List<TextEditingController> _ingredientControllers = [TextEditingController()];
+  final List<TextEditingController> _instructionControllers = [TextEditingController()];
 
   final _difficulties = ['Easy', 'Medium', 'Hard'];
   final _mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert'];
@@ -39,6 +39,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   @override
   void dispose() {
     for (final c in [_nameCtrl, _cuisineCtrl, _prepCtrl, _cookCtrl, _servingsCtrl, _calCtrl, _imageCtrl]) {
+      c.dispose();
+    }
+    for (final c in [..._ingredientControllers, ..._instructionControllers]) {
       c.dispose();
     }
     super.dispose();
@@ -57,8 +60,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       'servings': int.tryParse(_servingsCtrl.text) ?? 4,
       'caloriesPerServing': double.tryParse(_calCtrl.text) ?? 250,
       'image': _imageCtrl.text.trim(),
-      'ingredients': _ingredients.where((i) => i.trim().isNotEmpty).toList(),
-      'instructions': _instructions.where((i) => i.trim().isNotEmpty).toList(),
+      'ingredients': _ingredientControllers.map((c) => c.text.trim()).where((i) => i.isNotEmpty).toList(),
+      'instructions': _instructionControllers.map((c) => c.text.trim()).where((i) => i.isNotEmpty).toList(),
       'tags': [_mealType],
       'rating': 0,
       'reviewCount': 0,
@@ -133,22 +136,20 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             _sectionTitle('Ingredients'),
             const SizedBox(height: 8),
             _buildDynamicList(
-              items: _ingredients,
+              controllers: _ingredientControllers,
               hint: 'e.g. 1 cup flour',
-              onAdd: () => setState(() => _ingredients.add('')),
-              onRemove: (i) => setState(() => _ingredients.removeAt(i)),
-              onChange: (i, v) => _ingredients[i] = v,
+              onAdd: () => setState(() => _ingredientControllers.add(TextEditingController())),
+              onRemove: (i) => setState(() => _ingredientControllers.removeAt(i)),
             ),
             const SizedBox(height: 24),
             _sectionTitle('Instructions'),
             const SizedBox(height: 8),
             _buildDynamicList(
-              items: _instructions,
+              controllers: _instructionControllers,
               hint: 'Step description...',
               numbered: true,
-              onAdd: () => setState(() => _instructions.add('')),
-              onRemove: (i) => setState(() => _instructions.removeAt(i)),
-              onChange: (i, v) => _instructions[i] = v,
+              onAdd: () => setState(() => _instructionControllers.add(TextEditingController())),
+              onRemove: (i) => setState(() => _instructionControllers.removeAt(i)),
             ),
             const SizedBox(height: 32),
             Consumer<RecipeProvider>(
@@ -375,16 +376,16 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       );
 
   Widget _buildDynamicList({
-    required List<String> items,
+    required List<TextEditingController> controllers,
     required String hint,
     required VoidCallback onAdd,
     required void Function(int) onRemove,
-    required void Function(int, String) onChange,
     bool numbered = false,
   }) {
     return Column(
       children: [
-        ...items.asMap().entries.map((e) => Padding(
+        ...controllers.asMap().entries.map((e) => Padding(
+              key: ValueKey(e.value),
               padding: const EdgeInsets.only(bottom: 10),
               child: Row(children: [
                 if (numbered)
@@ -396,8 +397,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   ),
                 Expanded(
                   child: TextFormField(
-                    initialValue: e.value,
-                    onChanged: (v) => onChange(e.key, v),
+                    controller: e.value,
                     style: GoogleFonts.poppins(fontSize: 13),
                     maxLines: numbered ? 2 : 1,
                     decoration: InputDecoration(
@@ -411,7 +411,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     ),
                   ),
                 ),
-                if (items.length > 1)
+                if (controllers.length > 1)
                   IconButton(icon: const Icon(Icons.close_rounded, size: 18, color: Color(0xFFBBBBBB)), onPressed: () => onRemove(e.key)),
               ]),
             )),

@@ -32,8 +32,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
 
   late String _difficulty;
   late String _mealType;
-  late List<String> _ingredients;
-  late List<String> _instructions;
+  final List<TextEditingController> _ingredientControllers = [];
+  final List<TextEditingController> _instructionControllers = [];
 
   final _difficulties = ['Easy', 'Medium', 'Hard'];
   final _mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack', 'Dessert'];
@@ -51,13 +51,24 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
     _imageCtrl = TextEditingController(text: r.image);
     _difficulty = _difficulties.contains(r.difficulty) ? r.difficulty : 'Easy';
     _mealType = r.mealType.isNotEmpty && _mealTypes.contains(r.mealType.first) ? r.mealType.first : 'Dinner';
-    _ingredients = List<String>.from(r.ingredients.isNotEmpty ? r.ingredients : ['']);
-    _instructions = List<String>.from(r.instructions.isNotEmpty ? r.instructions : ['']);
+    _ingredientControllers.addAll(
+      r.ingredients.isNotEmpty
+          ? r.ingredients.map((i) => TextEditingController(text: i))
+          : [TextEditingController()],
+    );
+    _instructionControllers.addAll(
+      r.instructions.isNotEmpty
+          ? r.instructions.map((i) => TextEditingController(text: i))
+          : [TextEditingController()],
+    );
   }
 
   @override
   void dispose() {
     for (final c in [_nameCtrl, _cuisineCtrl, _prepCtrl, _cookCtrl, _servingsCtrl, _calCtrl, _imageCtrl]) {
+      c.dispose();
+    }
+    for (final c in [..._ingredientControllers, ..._instructionControllers]) {
       c.dispose();
     }
     super.dispose();
@@ -76,8 +87,8 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
       'servings': int.tryParse(_servingsCtrl.text) ?? widget.recipe.servings,
       'caloriesPerServing': double.tryParse(_calCtrl.text) ?? widget.recipe.caloriesPerServing,
       'image': _imageCtrl.text.trim().isNotEmpty ? _imageCtrl.text.trim() : widget.recipe.image,
-      'ingredients': _ingredients.where((i) => i.trim().isNotEmpty).toList(),
-      'instructions': _instructions.where((i) => i.trim().isNotEmpty).toList(),
+      'ingredients': _ingredientControllers.map((c) => c.text.trim()).where((i) => i.isNotEmpty).toList(),
+      'instructions': _instructionControllers.map((c) => c.text.trim()).where((i) => i.isNotEmpty).toList(),
       'tags': [_mealType],
       'rating': widget.recipe.rating,
       'reviewCount': widget.recipe.reviewCount,
@@ -158,22 +169,20 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
             _label('Ingredients'),
             const SizedBox(height: 8),
             _dynamicList(
-              items: _ingredients,
+              controllers: _ingredientControllers,
               hint: 'e.g. 1 cup flour',
-              onAdd: () => setState(() => _ingredients.add('')),
-              onRemove: (i) => setState(() => _ingredients.removeAt(i)),
-              onChange: (i, v) => _ingredients[i] = v,
+              onAdd: () => setState(() => _ingredientControllers.add(TextEditingController())),
+              onRemove: (i) => setState(() => _ingredientControllers.removeAt(i)),
             ),
             const SizedBox(height: 24),
             _label('Instructions'),
             const SizedBox(height: 8),
             _dynamicList(
-              items: _instructions,
+              controllers: _instructionControllers,
               hint: 'Step description...',
               numbered: true,
-              onAdd: () => setState(() => _instructions.add('')),
-              onRemove: (i) => setState(() => _instructions.removeAt(i)),
-              onChange: (i, v) => _instructions[i] = v,
+              onAdd: () => setState(() => _instructionControllers.add(TextEditingController())),
+              onRemove: (i) => setState(() => _instructionControllers.removeAt(i)),
             ),
             const SizedBox(height: 32),
             Consumer<RecipeProvider>(
@@ -409,16 +418,16 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
       );
 
   Widget _dynamicList({
-    required List<String> items,
+    required List<TextEditingController> controllers,
     required String hint,
     required VoidCallback onAdd,
     required void Function(int) onRemove,
-    required void Function(int, String) onChange,
     bool numbered = false,
   }) {
     return Column(
       children: [
-        ...items.asMap().entries.map((e) => Padding(
+        ...controllers.asMap().entries.map((e) => Padding(
+              key: ValueKey(e.value),
               padding: const EdgeInsets.only(bottom: 10),
               child: Row(children: [
                 if (numbered)
@@ -430,8 +439,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                   ),
                 Expanded(
                   child: TextFormField(
-                    initialValue: e.value,
-                    onChanged: (v) => onChange(e.key, v),
+                    controller: e.value,
                     style: GoogleFonts.poppins(fontSize: 13),
                     maxLines: numbered ? 2 : 1,
                     decoration: InputDecoration(
@@ -444,7 +452,7 @@ class _EditRecipeScreenState extends State<EditRecipeScreen> {
                     ),
                   ),
                 ),
-                if (items.length > 1)
+                if (controllers.length > 1)
                   IconButton(icon: const Icon(Icons.close_rounded, size: 18, color: Color(0xFFBBBBBB)), onPressed: () => onRemove(e.key)),
               ]),
             )),
